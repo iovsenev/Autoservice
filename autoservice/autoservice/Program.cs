@@ -1,6 +1,9 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Runtime.InteropServices;
 using Excel = Microsoft.Office.Interop.Excel;
 
+var path = Directory.GetCurrentDirectory();
+Console.WriteLine(path);
 Console.Write("Введите месяц: ");
 int month = int.Parse(Console.ReadLine());
 
@@ -55,7 +58,6 @@ ORDER BY
         ";
 
 System.Data.DataTable table = new System.Data.DataTable();
-
 using (SqlConnection conn = new SqlConnection(connectionString))
 using (SqlCommand cmd = new SqlCommand(query, conn))
 {
@@ -63,34 +65,60 @@ using (SqlCommand cmd = new SqlCommand(query, conn))
     cmd.Parameters.AddWithValue("@year", year);
 
     conn.Open();
-    SqlDataReader reader = cmd.ExecuteReader();
-    table.Load(reader);
-}
-
-// Открытие Excel шаблона и вставка данных
-Excel.Application excelApp = new Excel.Application();
-excelApp.Visible = true;
-
-Excel.Workbook wb = excelApp.Workbooks.Open(@"E:\WorkAndLearning\beckendLearning\testwork\autoservice\Template.xltm", ReadOnly: false);
-Excel.Worksheet ws = (Excel.Worksheet)wb.Sheets["Report"];
-
-// Вставка заголовков
-for (int i = 0; i < table.Columns.Count; i++)
-{
-    ((Excel.Range)ws.Cells[1, i + 1]).Value = table.Columns[i].ColumnName;
-}
-
-// Вставка данных
-for (int i = 0; i < table.Rows.Count; i++)
-{
-    for (int j = 0; j < table.Columns.Count; j++)
+    using (SqlDataReader reader = cmd.ExecuteReader())
     {
-        ((Excel.Range)ws.Cells[i + 2, j + 1]).Value = table.Rows[i][j];
+        table.Load(reader);
     }
 }
 
-excelApp.Run("FormatReport");
+Excel.Application excelApp = null;
+Excel.Workbook wb = null;
+Excel.Worksheet ws = null;
 
-wb.SaveAs(@"E:\WorkAndLearning\beckendLearning\testwork\autoservice\SavedReport.xlsx"); 
-wb.Close(false);
-excelApp.Quit();
+try
+{
+    excelApp = new Excel.Application();
+    excelApp.Visible = true;
+
+    wb = excelApp.Workbooks.Open(Path.Combine(path, @"Template.xltm"), ReadOnly: false);
+    ws = (Excel.Worksheet)wb.Sheets["Report"];
+
+    for (int i = 0; i < table.Columns.Count; i++)
+    {
+        Excel.Range cell = (Excel.Range)ws.Cells[1, i + 1];
+        cell.Value = table.Columns[i].ColumnName;
+        Marshal.ReleaseComObject(cell);
+    }
+
+    for (int i = 0; i < table.Rows.Count; i++)
+    {
+        for (int j = 0; j < table.Columns.Count; j++)
+        {
+            Excel.Range cell = (Excel.Range)ws.Cells[i + 2, j + 1];
+            cell.Value = table.Rows[i][j];
+            Marshal.ReleaseComObject(cell);
+        }
+    }
+
+    excelApp.Run("FormatReport");
+
+    wb.SaveAs(Path.Combine(path, @"SavedReport.xlsx"));
+        wb.Close(false);
+}
+finally
+{
+    if (ws != null) Marshal.ReleaseComObject(ws);
+    if (wb != null)
+        Marshal.ReleaseComObject(wb);
+    if (excelApp != null)
+    {
+        excelApp.Quit();
+        Marshal.ReleaseComObject(excelApp);
+    }
+
+    GC.Collect();
+    GC.WaitForPendingFinalizers();
+}
+
+Console.WriteLine("Отчет создан. для завершения нажмите любую клавишу. ");
+Console.ReadKey();
