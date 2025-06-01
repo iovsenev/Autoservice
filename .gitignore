@@ -1,0 +1,63 @@
+# --- Общие настройки ---
+*.log
+*.user
+*.suo
+*.DS_Store
+*.swp
+*.tmp
+*.bak
+*.old
+*.orig
+*.rej
+*.cache
+*.env
+
+# --- Папки IDE ---
+.vscode/
+.idea/
+
+# --- .NET ---
+bin/
+obj/
+*.dbmdl
+*.pdb
+
+# --- ASP.NET Core специфично ---
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# User secrets (если используется)
+**/secrets.json
+
+# --- Node.js / React ---
+node_modules/
+dist/
+build/
+
+# --- React / Vite / Next.js ---
+.next/
+out/
+.env.local
+.env.development
+.env.production
+
+# --- NPM/Yarn lock (если не используешь один фиксировано) ---
+# package-lock.json
+# yarn.lock
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Test ---
+coverage/
+__tests__/output/
+*.testresults
+
+# --- Others ---
+*.vs/
+*.ncrunch*
+*.resharper
